@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEE-Sim Pro | Simulatore Certificati Bianchi & Cogenerazione CAR</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js per i grafici interattivi -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Font Inter & JetBrains Mono per i numeri ingegneristici -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        petrol: {
+                            50: '#f0f7f9',
+                            100: '#d9ebf0',
+                            200: '#b6d8e2',
+                            500: '#246b82',
+                            700: '#164657',
+                            800: '#123847',
+                            900: '#0d2935',
+                            950: '#071a22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Stili personalizzati e ottimizzazione stampa */
+        body {
+            background-color: #f4f7f9;
+            color: #0f172a;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        /* Range slider styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #cbd5e1;
+            height: 0.45rem;
+            border-radius: 0.5rem;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px;
+            background-color: #164657;
+            height: 1.15rem;
+            width: 1.15rem;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.12);
+            background-color: #059669;
+        }
+
+        /* Regole di stampa per Report PDF pulito */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                font-size: 11px !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-full-width {
+                width: 100% !important;
+                max-width: 100% !important;
+                grid-column: span 12 / span 12 !important;
+            }
+            .shadow-sm, .shadow-md, .shadow-lg {
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-petrol-900 text-white border-b border-petrol-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- Logo SVG Ingegneristico -->
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-petrol-500 flex items-center justify-center shadow-inner">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-lg tracking-tight">TEE-Sim <span class="text-emerald-400">PRO</span></span>
+                        <span class="hidden sm:inline-block text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-petrol-800 text-amber-300 border border-amber-500/30">DM 05/09/2011 &amp; GSE</span>
+                    </div>
+                    <p class="text-xs text-slate-300 hidden sm:block">Piattaforma di Audit &amp; Simulazione Titoli di Efficienza Energetica (CAR / CHP)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 sm:space-x-3 no-print">
+                <button onclick="resetDefaults()" class="px-3 py-2 text-xs font-medium text-slate-200 hover:text-white bg-petrol-800 hover:bg-petrol-700 rounded-lg transition border border-petrol-700">
+                    Reset
+                </button>
+                <button onclick="window.print()" class="px-3.5 py-2 text-xs font-semibold text-petrol-950 bg-amber-400 hover:bg-amber-300 rounded-lg transition shadow-sm flex items-center space-x-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    <span>Esporta Report PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Barra Preset Industriali -->
+        <div class="mb-6 bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 no-print">
+            <div class="flex items-center space-x-2">
+                <span class="flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-600">Scenari Industriali Rapidi (Preset):</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full md:w-auto">
+                <button onclick="applyPreset('alimentare')" id="preset-alimentare" class="preset-btn px-3.5 py-2 rounded-xl text-left border border-slate-200 hover:border-petrol-500 hover:bg-petrol-50/60 transition flex items-center space-x-2.5 group">
+                    <span class="text-lg">🧀</span>
+                    <div>
+                        <div class="text-xs font-bold text-slate-800 group-hover:text-petrol-800">Caseificio / Alimentare</div>
+                        <div class="text-[11px] text-slate-500">4.500 MWh_e | 6.200 MWh_t</div>
+                    </div>
+                </button>
+                <button onclick="applyPreset('cartiera')" id="preset-cartiera" class="preset-btn px-3.5 py-2 rounded-xl text-left border border-slate-200 hover:border-petrol-500 hover:bg-petrol-50/60 transition flex items-center space-x-2.5 group">
+                    <span class="text-lg">🏭</span>
+                    <div>
+                        <div class="text-xs font-bold text-slate-800 group-hover:text-petrol-800">Cartiera / Chimico</div>
+                        <div class="text-[11px] text-slate-500">18.000 MWh_e | 28.000 MWh_t</div>
+                    </div>
+                </button>
+                <button onclick="applyPreset('ospedale')" id="preset-ospedale" class="preset-btn px-3.5 py-2 rounded-xl text-left border border-slate-200 hover:border-petrol-500 hover:bg-petrol-50/60 transition flex items-center space-x-2.5 group">
+                    <span class="text-lg">🏥</span>
+                    <div>
+                        <div class="text-xs font-bold text-slate-800 group-hover:text-petrol-800">Ospedale / Pharma (Frigo)</div>
+                        <div class="text-[11px] text-slate-500">7.000 MWh_e | 5.500 t | 3.200 f</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid Principale: Sidebar Input (4 col) + Dashboard Output (8 col) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- PANNELLO DI INPUT (Sinistra) -->
+            <aside class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5 lg:sticky lg:top-20">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-base font-bold text-petrol-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-petrol-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
+                            Parametri Impianto &amp; Consumi
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Inserisci i vettori energetici annui dello stabilimento</p>
+                    </div>
+                </div>
+
+                <!-- Sezione 1: Consumi Energetici -->
+                <div class="space-y-4">
+                    <!-- Elettrico -->
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <label for="elecConsumption" class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Consumo Elettrico Annuo
+                            </label>
+                            <span class="text-[11px] font-mono text-slate-500">MWh_e / anno</span>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-7">
+                                <input type="number" id="elecConsumption" value="5000" min="100" max="200000" step="100"
+                                    class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-mono text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-petrol-500 focus:border-petrol-500 outline-none">
+                            </div>
+                            <div class="col-span-5">
+                                <div class="relative">
+                                    <input type="number" id="elecPrice" value="135" min="30" max="500" step="5"
+                                        class="w-full pl-2.5 pr-7 py-2 bg-white border border-slate-300 rounded-lg font-mono text-xs font-medium text-slate-700 focus:ring-2 focus:ring-petrol-500 outline-none" title="Prezzo medio energia elettrica">
+                                    <span class="absolute right-2 top-2 text-[10px] font-mono text-slate-400">€/MWh</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-500">
+                            <span>Spesa elettrica attuale:</span>
+                            <span id="currentElecCost" class="font-mono font-semibold text-slate-700">675.000 €/anno</span>
+                        </div>
+                    </div>
+
+                    <!-- Termico -->
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <label for="thermConsumption" class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                                Consumo Termico (Gas/Calore)
+                            </label>
+                            <span class="text-[11px] font-mono text-slate-500">MWh_t / anno</span>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-7">
+                                <input type="number" id="thermConsumption" value="6500" min="0" max="300000" step="100"
+                                    class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-mono text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-petrol-500 focus:border-petrol-500 outline-none">
+                            </div>
+                            <div class="col-span-5">
+                                <div class="relative">
+                                    <input type="number" id="gasPrice" value="45" min="15" max="250" step="1"
+                                        class="w-full pl-2.5 pr-7 py-2 bg-white border border-slate-300 rounded-lg font-mono text-xs font-medium text-slate-700 focus:ring-2 focus:ring-petrol-500 outline-none" title="Prezzo medio gas naturale (PCS/PCI)">
+                                    <span class="absolute right-2 top-2 text-[10px] font-mono text-slate-400">€/MWh</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-500">
+                            <span>Spesa gas (caldaia η=90%):</span>
+                            <span id="currentGasCost" class="font-mono font-semibold text-slate-700">325.000 €/anno</span>
+                        </div>
+                    </div>
+
+                    <!-- Frigorifero -->
+                    <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+                        <div class="flex justify-between items-center">
+                            <label for="coolConsumption" class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                                Fabbisogno Frigorifero <span class="text-[10px] font-normal text-slate-400">(opz.)</span>
+                            </label>
+                            <span class="text-[11px] font-mono text-slate-500">MWh_f / anno</span>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-7">
+                                <input type="number" id="coolConsumption" value="1500" min="0" max="100000" step="100"
+                                    class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg font-mono text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-petrol-500 focus:border-petrol-500 outline-none">
+                            </div>
+                            <div class="col-span-5">
+                                <div class="relative">
+                                    <input type="number" id="chillerCop" value="3.2" min="2.0" max="6.0" step="0.1"
+                                        class="w-full pl-2.5 pr-9 py-2 bg-white border border-slate-300 rounded-lg font-mono text-xs font-medium text-slate-700 focus:ring-2 focus:ring-petrol-500 outline-none" title="EER / COP medio chiller elettrici esistenti">
+                                    <span class="absolute right-2 top-2 text-[10px] font-mono text-slate-400">EER</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight">
+                            * Il consumo elettrico dei chiller esistenti (MWh_f / EER) viene scomputato nello scenario Trigenerazione.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sezione 2: Ore Equivalenti & Mercato TEE -->
+                <div class="space-y-4 pt-1 border-t border-slate-100">
+                    <!-- Ore Equivalenti -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="operatingHours" class="text-xs font-bold text-slate-700">Ore Equivalenti Annue</label>
+                            <span id="operatingHoursDisplay" class="px-2 py-0.5 rounded bg-petrol-100 text-petrol-900 font-mono text-xs font-bold">6.500 h/anno</span>
+                        </div>
+                        <input type="range" id="operatingHours" min="2000" max="8760" step="100" value="6500" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono mt-1">
+                            <span>2.000 h (1 turno)</span>
+                            <span>5.500 h (2 turni)</span>
+                            <span>8.760 h (H24)</span>
+                        </div>
+                    </div>
+
+                    <!-- Valore Mercato TEE -->
+                    <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="teePrice" class="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                Quotazione Stimata TEE (GME)
+                            </label>
+                            <span class="text-[11px] font-mono text-amber-800">€ / TEE (1 TEP)</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="number" id="teePrice" value="250" min="100" max="450" step="5"
+                                class="w-28 px-3 py-1.5 bg-white border border-amber-300 rounded-lg font-mono text-sm font-bold text-amber-950 focus:ring-2 focus:ring-amber-500 outline-none">
+                            <span class="text-[11px] text-amber-800 leading-tight">Valore medio di mercato Titoli di Efficienza Energetica</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pulsante Aggiorna -->
+                <button onclick="runSimulation()" class="w-full py-3 px-4 bg-gradient-to-r from-petrol-800 to-petrol-700 hover:from-petrol-700 hover:to-petrol-600 text-white font-semibold text-sm rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2 no-print">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <span>Ricalcola Ottimizzazione TEE</span>
+                </button>
+            </aside>
+
+            <!-- DASHBOARD RISULTATI (Destra) -->
+            <div class="lg:col-span-8 space-y-6 print-full-width">
+
+                <!-- 1. BANNER TECNOLOGIA CONSIGLIATA (BEST FIT) -->
+                <section id="bestFitBanner" class="bg-gradient-to-br from-petrol-900 via-petrol-800 to-slate-900 rounded-2xl p-6 text-white shadow-lg border border-petrol-700 relative overflow-hidden">
+                    <!-- Decorazione geometrica -->
+                    <div class="absolute right-0 top-0 -mr-12 -mt-12 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none"></div>
+                    <div class="absolute right-20 bottom-0 -mb-12 w-40 h-40 rounded-full bg-amber-400/10 blur-2xl pointer-events-none"></div>
+
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="space-y-2 max-w-2xl">
+                            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                </svg>
+                                <span>TECNOLOGIA CONSIGLIATA (BEST FIT INGEGNERISTICO)</span>
+                            </div>
+                            <h1 id="bestTechName" class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                                Trigenerazione (CCHP + Assorbitore)
+                            </h1>
+                            <p id="bestTechRationale" class="text-sm text-slate-300 leading-relaxed">
+                                Il profilo energetico presenta un significativo fabbisogno frigorifero abbinato a carichi termici ed elettrici stabili: il recupero termico alimenta un gruppo frigo ad assorbimento massimizzando il PES e i Certificati Bianchi.
+                            </p>
+                            <div class="pt-1 flex flex-wrap gap-2 text-xs font-mono">
+                                <span id="bestTechSize" class="px-2.5 py-1 rounded-lg bg-white/10 text-amber-300 border border-white/10">Taglia: 680 kWe / 720 kWt / 470 kWf</span>
+                                <span id="bestTechPes" class="px-2.5 py-1 rounded-lg bg-white/10 text-emerald-300 border border-white/10">PES: 18,4% (Idoneo CAR)</span>
+                                <span id="bestTechK" class="px-2.5 py-1 rounded-lg bg-white/10 text-slate-200 border border-white/10">Coeff. K: 1,40</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl p-4 min-w-[190px] text-center md:text-right shrink-0">
+                            <div class="text-xs uppercase tracking-wider text-slate-300 font-medium">Payback Stimato</div>
+                            <div id="bestTechPayback" class="text-3xl font-mono font-bold text-amber-400 my-0.5 tabular-nums">3,4 anni</div>
+                            <div id="bestTechPaybackNoTee" class="text-[11px] text-slate-300 font-mono">Senza TEE: 5,1 anni</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. KPI CARDS (4 metriche chiave della tecnologia selezionata / migliore) -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <!-- KPI 1: TEE Annui -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">TEE Maturabili / Anno</span>
+                            <span class="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpiTeeYear" class="text-2xl font-mono font-bold text-slate-900 tabular-nums">412 TEE</div>
+                            <div id="kpiRispTep" class="text-xs text-slate-500 mt-1 font-mono">RISP: 294 TEP × K</div>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2: Ricavo Annuo TEE -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ricavo Annuo TEE</span>
+                            <span class="p-1.5 rounded-lg bg-amber-100 text-amber-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpiTeeRevYear" class="text-2xl font-mono font-bold text-amber-600 tabular-nums">103.000 €</div>
+                            <div class="text-xs text-slate-500 mt-1">Incentivo GSE diretto</div>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3: Ricavo Cumulato TEE (10 anni) -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cumulato TEE (Vita Utile)</span>
+                            <span class="p-1.5 rounded-lg bg-petrol-100 text-petrol-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpiTeeRev10Y" class="text-2xl font-mono font-bold text-petrol-800 tabular-nums">1.030.000 €</div>
+                            <div id="kpiIncentiveYears" class="text-xs text-slate-500 mt-1">Su 10 anni (CAR)</div>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4: Beneficio Totale Annuo (Bolletta + TEE) -->
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-emerald-200 bg-gradient-to-b from-white to-emerald-50/40 flex flex-col justify-between">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-emerald-800 uppercase tracking-wider">Beneficio Totale / Anno</span>
+                            <span class="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <div id="kpiTotalBenefit" class="text-2xl font-mono font-bold text-emerald-700 tabular-nums">285.400 €</div>
+                            <div id="kpiBillSavingSub" class="text-xs text-emerald-700/80 mt-1 font-mono">Bolletta: +182.400 €/a</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. TABELLA COMPARATIVA DELLE TECNOLOGIE -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-base font-bold text-petrol-900">Confronto Tecnologie &amp; Maturazione Certificati Bianchi</h3>
+                            <p class="text-xs text-slate-500">Clicca su una riga per ispezionare i KPI dettagliati della singola soluzione</p>
+                        </div>
+                        <span class="text-[11px] font-mono px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 self-start sm:self-auto">
+                            Rif. η_E = 46% | η_H = 90%
+                        </span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                                    <th class="py-3.5 px-4">Tecnologia</th>
+                                    <th class="py-3.5 px-3">Taglia Dimensionata</th>
+                                    <th class="py-3.5 px-3 text-right">PES %</th>
+                                    <th class="py-3.5 px-3 text-right">TEE / Anno</th>
+                                    <th class="py-3.5 px-3 text-right">Ricavo TEE (10a)</th>
+                                    <th class="py-3.5 px-3 text-right">Risp. Bolletta/a</th>
+                                    <th class="py-3.5 px-3 text-right">CAPEX Stima</th>
+                                    <th class="py-3.5 px-4 text-right">Payback (con TEE)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="techComparisonBody" class="divide-y divide-slate-100 text-sm">
+                                <!-- Popolato dinamicamente via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 4. SEZIONE GRAFICI INTERATTIVI -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Grafico 1: Scomposizione Beneficio Annuo -->
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col">
+                        <div class="mb-3">
+                            <h3 class="text-sm font-bold text-petrol-900">Beneficio Economico Annuo per Tecnologia</h3>
+                            <p class="text-xs text-slate-500">Confronto tra Risparmio in Bolletta e Ricavo da vendita TEE (€/anno)</p>
+                        </div>
+                        <div class="relative flex-grow min-h-[260px]">
+                            <canvas id="benefitsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Grafico 2: Flusso di Cassa Cumulato a 10 Anni (Payback Curve) -->
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col">
+                        <div class="mb-3">
+                            <h3 class="text-sm font-bold text-petrol-900">Flusso di Cassa Cumulato (Orizzonte 10 Anni)</h3>
+                            <p class="text-xs text-slate-500">Punto di pareggio (Payback) includendo i Certificati Bianchi</p>
+                        </div>
+                        <div class="relative flex-grow min-h-[260px]">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. NOTA METODOLOGICA & FORMULE INGEGNERISTICHE -->
+                <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <button onclick="toggleMethodology()" class="w-full p-4 px-5 flex items-center justify-between text-left hover:bg-slate-50 transition">
+                        <div class="flex items-center space-x-2.5">
+                            <div class="w-7 h-7 rounded-lg bg-petrol-100 text-petrol-800 flex items-center justify-center font-mono text-xs font-bold">fx</div>
+                            <div>
+                                <h3 class="text-sm font-bold text-petrol-900">Nota Tecnica &amp; Metodologia di Calcolo (DM 05/09/2011 &amp; Linee Guida GSE)</h3>
+                                <p class="text-xs text-slate-500">Dettaglio formule PES, Risparmio di Energia Primaria (RISP), coefficienti K e fattori di conversione TEP</p>
+                            </div>
+                        </div>
+                        <svg id="methodologyChevron" class="w-5 h-5 text-slate-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div id="methodologyContent" class="hidden px-5 pb-5 pt-2 border-t border-slate-100 text-xs text-slate-600 space-y-3 leading-relaxed">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1.5">
+                                <h4 class="font-bold text-petrol-900">1. Cogenerazione ad Alto Rendimento (CAR)</h4>
+                                <p>Il <strong>Primary Energy Saving (PES)</strong> valuta il risparmio di energia primaria rispetto alla produzione separata di elettricità e calore:</p>
+                                <div class="p-2 bg-white rounded border border-slate-200 font-mono text-[11px] text-slate-800">
+                                    PES = 1 - [ 1 / ( (η_H / η_H,rif) + (η_E / η_E,rif) ) ]
+                                </div>
+                                <p>La soglia di accesso CAR è <strong>PES ≥ 10%</strong> (oppure <strong>PES &gt; 0%</strong> per unità di piccola cogenerazione &lt; 1 MWe). I TEE maturati durano <strong>10 anni</strong>.</p>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 space-y-1.5">
+                                <h4 class="font-bold text-petrol-900">2. Calcolo RISP, TEP e Coefficiente K</h4>
+                                <p>Il Risparmio di Energia Primaria (RISP) incentivabile viene convertito in TEP (1 MWh_ep = 0,086 TEP) e moltiplicato per il fattore di armonizzazione <strong>K</strong>:</p>
+                                <div class="p-2 bg-white rounded border border-slate-200 font-mono text-[11px] text-slate-800">
+                                    TEE = [ (E_chp / η_E,rif) + (H_chp / η_H,rif) - F_chp ] × 0,086 × K
+                                </div>
+                                <ul class="list-disc list-inside text-[11px] text-slate-600">
+                                    <li><strong>K = 1,4</strong> per la quota di potenza fino a 1 MWe</li>
+                                    <li><strong>K = 1,3</strong> per la quota tra 1 MWe e 10 MWe</li>
+                                    <li><strong>K = 1,2</strong> per la quota oltre 10 MWe</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 italic">
+                            Nota: I valori di rendimento di riferimento utilizzati nella simulazione riflettono i parametri armonizzati UE/GSE (η_E,rif ≈ 46% corretto per perdite di rete, η_H,rif = 90% per caldaie a gas naturale). Per la Pompa di Calore industriale (efficienza energetica standard non-CAR), si considera il fattore di conversione rete elettrica 0,187 TEP/MWh_e e vita utile incentivabile pari a 7 anni (normalizzata su base annua nella tabella).
+                        </p>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-5 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <span><strong>TEE-Sim PRO</strong> — Strumento di pre-fattibilità ingegneristica ed economica per Certificati Bianchi</span>
+            <span class="font-mono text-[11px] text-slate-400">Simulazione indicativa • Verificare diagnosi energetica ISO 50001 / D.Lgs. 102/2014</span>
+        </div>
+    </footer>
+
+    <!-- LOGICA DI CALCOLO E INTERAZIONE -->
+    <script>
+        // Riferimenti ai grafici Chart.js
+        let benefitsChartInstance = null;
+        let cashflowChartInstance = null;
+
+        // Stato globale dei risultati calcolati e tecnologia attualmente evidenziata
+        let currentResults = [];
+        let selectedTechId = null;
+
+        // Formattatori numeri italiani
+        const fmtInt = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 });
+        const fmtDec1 = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const fmtCurr = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+
+        // Preset industriali realistici
+        const PRESETS = {
+            alimentare: {
+                elec: 4500,
+                elecPrice: 140,
+                therm: 6200,
+                gasPrice: 46,
+                cool: 800,
+                eer: 3.1,
+                hours: 6200,
+                teePrice: 250
+            },
+            cartiera: {
+                elec: 18000,
+                elecPrice: 125,
+                therm: 28000,
+                gasPrice: 42,
+                cool: 0,
+                eer: 3.2,
+                hours: 7800,
+                teePrice: 250
+            },
+            ospedale: {
+                elec: 7000,
+                elecPrice: 145,
+                therm: 5500,
+                gasPrice: 48,
+                cool: 3200,
+                eer: 3.0,
+                hours: 7200,
+                teePrice: 255
+            }
+        };
+
+        // Applica un preset
+        function applyPreset(key) {
+            const p = PRESETS[key];
+            if (!p) return;
+
+            document.getElementById('elecConsumption').value = p.elec;
+            document.getElementById('elecPrice').value = p.elecPrice;
+            document.getElementById('thermConsumption').value = p.therm;
+            document.getElementById('gasPrice').value = p.gasPrice;
+            document.getElementById('coolConsumption').value = p.cool;
+            document.getElementById('chillerCop').value = p.eer;
+            document.getElementById('operatingHours').value = p.hours;
+            document.getElementById('teePrice').value = p.teePrice;
+
+            // Evidenzia bottone attivo
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('border-petrol-600', 'bg-petrol-50', 'ring-1', 'ring-petrol-500');
+            });
+            const activeBtn = document.getElementById('preset-' + key);
+            if (activeBtn) {
+                activeBtn.classList.add('border-petrol-600', 'bg-petrol-50', 'ring-1', 'ring-petrol-500');
+            }
+
+            selectedTechId = null; // Reset selezione manuale per mostrare il nuovo Best Fit
+            runSimulation();
+        }
+
+        // Ripristina valori predefiniti
+        function resetDefaults() {
+            document.getElementById('elecConsumption').value = 5000;
+            document.getElementById('elecPrice').value = 135;
+            document.getElementById('thermConsumption').value = 6500;
+            document.getElementById('gasPrice').value = 45;
+            document.getElementById('coolConsumption').value = 1500;
+            document.getElementById('chillerCop').value = 3.2;
+            document.getElementById('operatingHours').value = 6500;
+            document.getElementById('teePrice').value = 250;
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('border-petrol-600', 'bg-petrol-50', 'ring-1', 'ring-petrol-500');
+            });
+            selectedTechId = null;
+            runSimulation();
+        }
+
+        // Toggle sezione metodologia
+        function toggleMethodology() {
+            const content = document.getElementById('methodologyContent');
+            const chevron = document.getElementById('methodologyChevron');
+            content.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        }
+
+        // Calcola il coefficiente K armonizzato CAR in base alla potenza elettrica in MWe
+        function calculateCoeffK(powerMWe) {
+            if (powerMWe <= 1.0) return 1.40;
+            if (powerMWe <= 10.0) {
+                // Media ponderata sugli scaglioni (1 MWe a 1.4, resto fino a 10 MWe a 1.3)
+                return ((1.0 * 1.4) + ((powerMWe - 1.0) * 1.3)) / powerMWe;
+            }
+            // Oltre 10 MWe
+            return ((1.0 * 1.4) + (9.0 * 1.3) + ((powerMWe - 10.0) * 1.2)) / powerMWe;
+        }
+
+        // Motore di simulazione principale
+        function runSimulation() {
+            // 1. Lettura Input
+            const elecMWh = Math.max(0, parseFloat(document.getElementById('elecConsumption').value) || 0);
+            const elecPrice = Math.max(0, parseFloat(document.getElementById('elecPrice').value) || 0);
+            const thermMWh = Math.max(0, parseFloat(document.getElementById('thermConsumption').value) || 0);
+            const gasPrice = Math.max(0, parseFloat(document.getElementById('gasPrice').value) || 0);
+            const coolMWh = Math.max(0, parseFloat(document.getElementById('coolConsumption').value) || 0);
+            const chillerEER = Math.max(1.5, parseFloat(document.getElementById('chillerCop').value) || 3.2);
+            const hours = Math.max(1000, parseFloat(document.getElementById('operatingHours').value) || 6500);
+            const teePrice = Math.max(0, parseFloat(document.getElementById('teePrice').value) || 250);
+
+            // Aggiorna display ore e spese baseline
+            document.getElementById('operatingHoursDisplay').textContent = `${fmtInt.format(hours)} h/anno`;
+            const baseElecCost = elecMWh * elecPrice;
+            const etaBoiler = 0.90; // Rendimento caldaia esistente di riferimento
+            const baseGasCost = (thermMWh / etaBoiler) * gasPrice;
+            document.getElementById('currentElecCost').textContent = `${fmtInt.format(baseElecCost)} €/anno`;
+            document.getElementById('currentGasCost').textContent = `${fmtInt.format(baseGasCost)} €/anno`;
+
+            // Parametri di riferimento normativi CAR (DM 05/09/2011 & GSE)
+            const etaERef = 0.46; // Rendimento elettrico di riferimento rete (corretto per tensione/perdite)
+            const etaHRef = 0.90; // Rendimento termico di riferimento caldaia a gas naturale
+            const mwhToTep = 0.086; // Fattore conversione energia primaria MWh -> TEP
+
+            const scenarios = [];
+
+            // =========================================================================
+            // OPZIONE 1: COGENERAZIONE CON MOTORE ENDOTERMICO A GAS (ICE - CHP)
+            // =========================================================================
+            {
+                const etaE = 0.425; // Alto rendimento elettrico (42.5%)
+                const etaH = 0.435; // Recupero termico acqua calda/fumi (43.5%)
+                
+                // Dimensionamento orientato al carico base termico ed elettrico (evitando dissipazione)
+                const maxThermByLoad = thermMWh * 0.85;
+                const maxElecByLoad = elecMWh * 0.90;
+                
+                // Potenza termica e elettrica coerenti con rapporto etaE/etaH
+                let pElecKW = Math.min(maxElecByLoad / hours * 1000, (maxThermByLoad / hours * 1000) * (etaE / etaH));
+                pElecKW = Math.max(50, Math.round(pElecKW / 10) * 10); // Minimo 50 kWe, arrotondato a 10 kW
+                const pThermKW = Math.round(pElecKW * (etaH / etaE));
+
+                const eChp = (pElecKW * hours) / 1000; // MWh_e prodotti
+                const hChp = Math.min(thermMWh, (pThermKW * hours) / 1000); // MWh_t effettivamente recuperati
+                const fChp = eChp / etaE; // Combustibile gas consumato dal cogeneratore (MWh_pci)
+
+                // Calcolo PES
+                const effHReal = hChp / fChp;
+                const effEReal = eChp / fChp;
+                const pes = (1 - (1 / ((effHReal / etaHRef) + (effEReal / etaERef)))) * 100;
+                const isCarEligible = (pElecKW < 1000 && pes > 0) || (pes >= 10);
+
+                // Calcolo RISP e TEE
+                const rispMWh = Math.max(0, (eChp / etaERef) + (hChp / etaHRef) - fChp);
+                const coeffK = calculateCoeffK(pElecKW / 1000);
+                const teeYear = isCarEligible ? Math.round(rispMWh * mwhToTep * coeffK) : 0;
+                const incentiveYears = 10;
+                const teeRevYear = teeYear * teePrice;
+                const teeRevTotal = teeRevYear * incentiveYears;
+
+                // Bilancio economico in bolletta (risparmio acquisto rete + risparmio gas caldaia - gas CHP - O&M)
+                const avoidedElecCost = eChp * elecPrice;
+                const avoidedBoilerGasCost = (hChp / etaBoiler) * gasPrice;
+                const chpFuelCost = fChp * gasPrice;
+                const omCost = eChp * 13; // Manutenzione full-service ~13 €/MWh_e
+                const billSaving = avoidedElecCost + avoidedBoilerGasCost - chpFuelCost - omCost;
+
+                // CAPEX chiavi in mano (€/kWe decrescente con la taglia)
+                const specificCapex = pElecKW < 500 ? 1350 : (pElecKW < 2000 ? 1100 : 950);
+                const capex = pElecKW * specificCapex;
+
+                const totalAnnualBenefit = billSaving + teeRevYear;
+                const paybackWithTee = totalAnnualBenefit > 0 ? capex / totalAnnualBenefit : 99;
+                const paybackNoTee = billSaving > 0 ? capex / billSaving : 99;
+
+                scenarios.push({
+                    id: 'ice',
+                    name: 'Motore Endotermico a Gas (CHP)',
+                    shortName: 'Motore Gas (ICE)',
+                    badge: 'Alta Efficienza Elettrica',
+                    sizeLabel: `${fmtInt.format(pElecKW)} kWe / ${fmtInt.format(pThermKW)} kWt`,
+                    pElecKW,
+                    pes,
+                    isCarEligible,
+                    coeffK,
+                    rispTep: rispMWh * mwhToTep,
+                    teeYear,
+                    incentiveYears,
+                    teeRevYear,
+                    teeRevTotal,
+                    billSaving,
+                    totalAnnualBenefit,
+                    capex,
+                    paybackWithTee,
+                    paybackNoTee,
+                    rationale: `Ottimo equilibrio tra generazione elettrica (η_e ~42,5%) e recupero termico su acqua calda/surriscaldata. Dimensionato su ${fmtInt.format(pElecKW)} kWe per ${fmtInt.format(hours)} ore/anno, massimizza l'autoconsumo elettrico riducendo l'acquisto da rete.`
+                });
+            }
+
+            // =========================================================================
+            // OPZIONE 2: TURBINA A GAS (TURBOGAS - CHP)
+            // =========================================================================
+            {
+                const etaE = 0.32; // Rendimento elettrico (32%)
+                const etaH = 0.52; // Alto recupero termico ad alta temperatura / vapore (52%)
+
+                // Turbogas richiede carichi termici importanti e funzionamento continuo
+                const maxThermByLoad = thermMWh * 0.90;
+                const maxElecByLoad = elecMWh * 0.95;
+
+                let pElecKW = Math.min(maxElecByLoad / hours * 1000, (maxThermByLoad / hours * 1000) * (etaE / etaH));
+                pElecKW = Math.max(400, Math.round(pElecKW / 50) * 50); // Taglia minima industriale turbogas ~400 kWe
+                const pThermKW = Math.round(pElecKW * (etaH / etaE));
+
+                const eChp = (pElecKW * hours) / 1000;
+                const hChp = Math.min(thermMWh, (pThermKW * hours) / 1000);
+                const fChp = eChp / etaE;
+
+                const effHReal = hChp / fChp;
+                const effEReal = eChp / fChp;
+                const pes = (1 - (1 / ((effHReal / etaHRef) + (effEReal / etaERef)))) * 100;
+                // Penalità se l'impianto è sovradimensionato rispetto al carico termico reale
+                const isCarEligible = ((pElecKW < 1000 && pes > 0) || (pes >= 10)) && (thermMWh >= 3000);
+
+                const rispMWh = Math.max(0, (eChp / etaERef) + (hChp / etaHRef) - fChp);
+                const coeffK = calculateCoeffK(pElecKW / 1000);
+                const teeYear = isCarEligible ? Math.round(rispMWh * mwhToTep * coeffK) : 0;
+                const incentiveYears = 10;
+                const teeRevYear = teeYear * teePrice;
+                const teeRevTotal = teeRevYear * incentiveYears;
+
+                const avoidedElecCost = Math.min(elecMWh, eChp) * elecPrice + Math.max(0, eChp - elecMWh) * (elecPrice * 0.65);
+                const avoidedBoilerGasCost = (hChp / etaBoiler) * gasPrice;
+                const chpFuelCost = fChp * gasPrice;
+                const omCost = eChp * 9.5; // O&M inferiore per turbogas (~9.5 €/MWh_e)
+                const billSaving = avoidedElecCost + avoidedBoilerGasCost - chpFuelCost - omCost;
+
+                const specificCapex = pElecKW < 1500 ? 1250 : (pElecKW < 5000 ? 1000 : 850);
+                const capex = pElecKW * specificCapex;
+
+                const totalAnnualBenefit = billSaving + teeRevYear;
+                const paybackWithTee = totalAnnualBenefit > 0 ? capex / totalAnnualBenefit : 99;
+                const paybackNoTee = billSaving > 0 ? capex / billSaving : 99;
+
+                scenarios.push({
+                    id: 'turbogas',
+                    name: 'Turbina a Gas (Turbogas CHP)',
+                    shortName: 'Turbogas (CHP)',
+                    badge: 'Vapore & Alte Ore',
+                    sizeLabel: `${fmtInt.format(pElecKW)} kWe / ${fmtInt.format(pThermKW)} kWt`,
+                    pElecKW,
+                    pes,
+                    isCarEligible,
+                    coeffK,
+                    rispTep: rispMWh * mwhToTep,
+                    teeYear,
+                    incentiveYears,
+                    teeRevYear,
+                    teeRevTotal,
+                    billSaving,
+                    totalAnnualBenefit,
+                    capex,
+                    paybackWithTee,
+                    paybackNoTee,
+                    rationale: `Ideale per processi energivori con elevata richiesta di vapore tecnologico o olio diatermico e funzionamento continuo (${fmtInt.format(hours)} h/anno). Bassi costi di manutenzione O&M e altissima affidabilità.`
+                });
+            }
+
+            // =========================================================================
+            // OPZIONE 3: TRIGENERAZIONE (CCHP - MOTORE GAS + GRUPPO FRIGO ASSORBIMENTO)
+            // =========================================================================
+            {
+                const etaE = 0.42;
+                const etaH = 0.44;
+                const copAbsorber = 0.72; // COP frigorifero ad assorbimento a singolo effetto (acqua calda 90°C)
+
+                // Calore equivalente necessario per coprire il fabbisogno frigorifero tramite assorbitore
+                const heatForCoolingMWh = coolMWh > 0 ? (coolMWh / copAbsorber) : 0;
+                const totalEquivalentHeatMWh = thermMWh + heatForCoolingMWh;
+
+                // Elettricità attualmente consumata dai chiller meccanici che verrebbe sostituita
+                const savedChillerElecMWh = coolMWh > 0 ? (coolMWh / chillerEER) : 0;
+                const netElecDemandMWh = Math.max(100, elecMWh - savedChillerElecMWh);
+
+                const maxThermByLoad = totalEquivalentHeatMWh * 0.85;
+                const maxElecByLoad = netElecDemandMWh * 0.92;
+
+                let pElecKW = Math.min(maxElecByLoad / hours * 1000, (maxThermByLoad / hours * 1000) * (etaE / etaH));
+                pElecKW = Math.max(80, Math.round(pElecKW / 10) * 10);
+                const pThermKW = Math.round(pElecKW * (etaH / etaE));
+                const pCoolKW = coolMWh > 0 ? Math.round(Math.min(coolMWh / hours * 1000, pThermKW * 0.65 * copAbsorber)) : 0;
+
+                const eChp = (pElecKW * hours) / 1000;
+                const totalHeatProduced = (pThermKW * hours) / 1000;
+                
+                // Ripartizione calore tra usi termici diretti e alimentazione assorbitore
+                const hUsedForCool = Math.min(heatForCoolingMWh, totalHeatProduced * 0.65);
+                const actualCoolProduced = hUsedForCool * copAbsorber;
+                const hUsedForTherm = Math.min(thermMWh, totalHeatProduced - hUsedForCool);
+                
+                // Nella normativa CAR (Linee Guida GSE Trigenerazione), il calore utile H_CHP include il calore ceduto all'assorbitore
+                const hChpUseful = hUsedForTherm + hUsedForCool;
+                const fChp = eChp / etaE;
+
+                const effHReal = hChpUseful / fChp;
+                const effEReal = eChp / fChp;
+                const pes = (1 - (1 / ((effHReal / etaHRef) + (effEReal / etaERef)))) * 100;
+                const isCarEligible = ((pElecKW < 1000 && pes > 0) || (pes >= 10)) && (coolMWh >= 300);
+
+                const rispMWh = Math.max(0, (eChp / etaERef) + (hChpUseful / etaHRef) - fChp);
+                const coeffK = calculateCoeffK(pElecKW / 1000);
+                const teeYear = isCarEligible ? Math.round(rispMWh * mwhToTep * coeffK) : 0;
+                const incentiveYears = 10;
+                const teeRevYear = teeYear * teePrice;
+                const teeRevTotal = teeRevYear * incentiveYears;
+
+                // Risparmio bolletta: autoproduzione CHP + elettricità chiller evitata + gas caldaia evitato - gas CHP - O&M
+                const avoidedChillerElecActual = actualCoolProduced / chillerEER;
+                const avoidedElecCost = (eChp + avoidedChillerElecActual) * elecPrice;
+                const avoidedBoilerGasCost = (hUsedForTherm / etaBoiler) * gasPrice;
+                const chpFuelCost = fChp * gasPrice;
+                const omCost = (eChp * 13.5) + (actualCoolProduced * 2.5);
+                const billSaving = avoidedElecCost + avoidedBoilerGasCost - chpFuelCost - omCost;
+
+                const capexChp = pElecKW * (pElecKW < 500 ? 1350 : 1100);
+                const capexAbsorber = pCoolKW * 420; // Costo specifico gruppo frigo ad assorbimento (~420 €/kWf)
+                const capex = capexChp + capexAbsorber;
+
+                const totalAnnualBenefit = billSaving + teeRevYear;
+                const paybackWithTee = totalAnnualBenefit > 0 ? capex / totalAnnualBenefit : 99;
+                const paybackNoTee = billSaving > 0 ? capex / billSaving : 99;
+
+                scenarios.push({
+                    id: 'cchp',
+                    name: 'Trigenerazione (CCHP + Assorbitore)',
+                    shortName: 'Trigenerazione (CCHP)',
+                    badge: 'Elettrico + Caldo + Freddo',
+                    sizeLabel: `${fmtInt.format(pElecKW)} kWe / ${fmtInt.format(pCoolKW)} kWf`,
+                    pElecKW,
+                    pes,
+                    isCarEligible,
+                    coeffK,
+                    rispTep: rispMWh * mwhToTep,
+                    teeYear,
+                    incentiveYears,
+                    teeRevYear,
+                    teeRevTotal,
+                    billSaving,
+                    totalAnnualBenefit,
+                    capex,
+                    paybackWithTee,
+                    paybackNoTee,
+                    rationale: coolMWh >= 300 
+                        ? `La presenza di ${fmtInt.format(coolMWh)} MWh_f/anno di fabbisogno frigorifero rende la Trigenerazione estremamente vantaggiosa: il calore di scarto alimenta l'assorbitore (${fmtInt.format(pCoolKW)} kWf), tagliando i consumi elettrici dei chiller e massimizzando i TEE.`
+                        : `Non è stato inserito un carico frigorifero significativo: la Trigenerazione richiede almeno 300-500 MWh_f/anno per giustificare l'investimento sul gruppo ad assorbimento.`
+                });
+            }
+
+            // =========================================================================
+            // OPZIONE 4: POMPA DI CALORE INDUSTRIALE AD ALTA TEMPERATURA (DECABONIZZAZIONE)
+            // =========================================================================
+            {
+                const copHp = 3.4; // COP medio industriale con recupero cascami termici
+                const coveredThermMWh = thermMWh * 0.75;
+                const pThermKW = Math.max(100, Math.round((coveredThermMWh / hours * 1000) / 10) * 10);
+                const pElecAbsorbedKW = Math.round(pThermKW / copHp);
+
+                const hProduced = Math.min(thermMWh, (pThermKW * hours) / 1000);
+                const eConsumedHp = hProduced / copHp;
+                const gasSavedMWh = hProduced / etaBoiler;
+
+                // Risparmio primario standard: Gas risparmiato (0,086 TEP/MWh) - Elettricità consumata (0,187 TEP/MWh rete)
+                const tepSavedGas = gasSavedMWh * 0.086;
+                const tepUsedElec = eConsumedHp * 0.187;
+                const netTepSaved = Math.max(0, tepSavedGas - tepUsedElec);
+
+                // Calcolo PES equivalente
+                const pes = gasSavedMWh > 0 ? ((tepSavedGas - tepUsedElec) / tepSavedGas) * 100 : 0;
+                const isEligible = netTepSaved > 10; // Soglia minima progetti standard TEE
+                const coeffK = 1.00; // Progetti standard non godono del moltiplicatore CAR
+                const teeYear = isEligible ? Math.round(netTepSaved * coeffK) : 0;
+                const incentiveYears = 7; // Vita utile standard 7 anni (DM 21/05/2021)
+                const teeRevYear = teeYear * teePrice;
+                const teeRevTotal = teeRevYear * incentiveYears;
+
+                // Risparmio bolletta: Gas risparmiato - Maggiore consumo elettrico PdC - O&M
+                const billSaving = (gasSavedMWh * gasPrice) - (eConsumedHp * elecPrice) - (hProduced * 2.0);
+                const capex = pThermKW * 480; // ~480 €/kWt installato
+
+                const totalAnnualBenefit = billSaving + teeRevYear;
+                const paybackWithTee = totalAnnualBenefit > 0 ? capex / totalAnnualBenefit : 99;
+                const paybackNoTee = billSaving > 0 ? capex / billSaving : 99;
+
+                scenarios.push({
+                    id: 'hp',
+                    name: 'Pompa di Calore Industriale (PdC)',
+                    shortName: 'Pompa di Calore HT',
+                    badge: 'Elettrificazione & No-Gas',
+                    sizeLabel: `${fmtInt.format(pThermKW)} kWt (${fmtInt.format(pElecAbsorbedKW)} kWe ass.)`,
+                    pElecKW: pElecAbsorbedKW,
+                    pes,
+                    isCarEligible: isEligible,
+                    coeffK,
+                    rispTep: netTepSaved,
+                    teeYear,
+                    incentiveYears,
+                    teeRevYear,
+                    teeRevTotal,
+                    billSaving,
+                    totalAnnualBenefit,
+                    capex,
+                    paybackWithTee,
+                    paybackNoTee,
+                    rationale: `Soluzione 100% elettrificata per processi fino a 90-110°C: sostituisce il gas naturale riducendo le emissioni dirette (Scope 1). La convenienza economica dipende fortemente dallo spark-spread (rapporto prezzo Elettricità / Gas).`
+                });
+            }
+
+            currentResults = scenarios;
+
+            // Determinazione automatica del Best Fit (escludendo opzioni non idonee o con payback > 15 anni)
+            const bestFit = determineBestFit(scenarios, coolMWh, hours, thermMWh);
+            
+            // Se l'utente non ha cliccato manualmente su una riga, seleziona il Best Fit
+            if (!selectedTechId) {
+                selectedTechId = bestFit.id;
+            }
+
+            const activeTech = scenarios.find(s => s.id === selectedTechId) || bestFit;
+
+            // Aggiorna UI
+            updateBestFitBanner(bestFit);
+            updateKpiCards(activeTech);
+            updateComparisonTable(scenarios, bestFit.id, activeTech.id);
+            updateCharts(scenarios, activeTech);
+        }
+
+        // Logica di selezione della tecnologia migliore (Best Fit)
+        function determineBestFit(scenarios, coolMWh, hours, thermMWh) {
+            const cchp = scenarios.find(s => s.id === 'cchp');
+            const turbogas = scenarios.find(s => s.id === 'turbogas');
+            const ice = scenarios.find(s => s.id === 'ice');
+            const hp = scenarios.find(s => s.id === 'hp');
+
+            // 1. Se c'è carico frigorifero rilevante e CCHP ha un buon payback
+            if (coolMWh >= 600 && cchp && cchp.isCarEligible && cchp.paybackWithTee < 7.5) {
+                return cchp;
+            }
+            // 2. Se i consumi termici sono molto alti (> 15.000 MWh_t) e ore alte (> 6.500 h), Turbogas è ideale
+            if (thermMWh >= 15000 && hours >= 6500 && turbogas && turbogas.isCarEligible && turbogas.paybackWithTee <= ice.paybackWithTee + 0.5) {
+                return turbogas;
+            }
+            // 3. Altrimenti confronta il miglior payback/beneficio tra gli impianti idonei
+            const valid = scenarios.filter(s => s.isCarEligible && s.totalAnnualBenefit > 0);
+            if (valid.length > 0) {
+                valid.sort((a, b) => a.paybackWithTee - b.paybackWithTee);
+                return valid[0];
+            }
+            return ice;
+        }
+
+        // Aggiorna il banner in alto
+        function updateBestFitBanner(best) {
+            document.getElementById('bestTechName').textContent = best.name;
+            document.getElementById('bestTechRationale').textContent = best.rationale;
+            document.getElementById('bestTechSize').textContent = `Taglia: ${best.sizeLabel}`;
+            document.getElementById('bestTechPes').textContent = `PES: ${fmtDec1.format(best.pes)}% ${best.isCarEligible ? '(Idoneo TEE)' : '(Sotto soglia)'}`;
+            document.getElementById('bestTechK').textContent = `Coeff. K: ${fmtDec1.format(best.coeffK)}`;
+            
+            const pbText = best.paybackWithTee < 25 ? `${fmtDec1.format(best.paybackWithTee)} anni` : 'N/A (>25a)';
+            const pbNoTeeText = best.paybackNoTee < 25 ? `Senza TEE: ${fmtDec1.format(best.paybackNoTee)} anni` : 'Senza TEE: >25 anni';
+            document.getElementById('bestTechPayback').textContent = pbText;
+            document.getElementById('bestTechPaybackNoTee').textContent = pbNoTeeText;
+        }
+
+        // Aggiorna le 4 KPI cards superiori per la tecnologia selezionata
+        function updateKpiCards(tech) {
+            document.getElementById('kpiTeeYear').textContent = `${fmtInt.format(tech.teeYear)} TEE`;
+            document.getElementById('kpiRispTep').textContent = `RISP: ${fmtInt.format(tech.rispTep)} TEP × K(${fmtDec1.format(tech.coeffK)})`;
+            document.getElementById('kpiTeeRevYear').textContent = fmtCurr.format(tech.teeRevYear);
+            document.getElementById('kpiTeeRev10Y').textContent = fmtCurr.format(tech.teeRevTotal);
+            document.getElementById('kpiIncentiveYears').textContent = `Cumulato su ${tech.incentiveYears} anni`;
+            document.getElementById('kpiTotalBenefit').textContent = fmtCurr.format(tech.totalAnnualBenefit);
+            
+            const sign = tech.billSaving >= 0 ? '+' : '';
+            document.getElementById('kpiBillSavingSub').textContent = `Bolletta: ${sign}${fmtInt.format(tech.billSaving)} €/anno`;
+        }
+
+        // Popola la tabella comparativa
+        function updateComparisonTable(scenarios, bestId, activeId) {
+            const tbody = document.getElementById('techComparisonBody');
+            tbody.innerHTML = '';
+
+            scenarios.forEach(tech => {
+                const isBest = tech.id === bestId;
+                const isActive = tech.id === activeId;
+
+                const tr = document.createElement('tr');
+                tr.className = `cursor-pointer transition ${isActive ? 'bg-petrol-50/90 font-medium' : 'hover:bg-slate-50'}`;
+                tr.onclick = () => {
+                    selectedTechId = tech.id;
+                    updateKpiCards(tech);
+                    updateComparisonTable(scenarios, bestId, tech.id);
+                    updateCharts(scenarios, tech);
+                };
+
+                const pesBadgeColor = tech.isCarEligible 
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                    : 'bg-rose-100 text-rose-800 border-rose-200';
+
+                const pbDisplay = tech.paybackWithTee < 25 
+                    ? `<span class="font-mono font-bold ${tech.paybackWithTee <= 4.5 ? 'text-emerald-700' : 'text-slate-800'}">${fmtDec1.format(tech.paybackWithTee)} anni</span>`
+                    : `<span class="font-mono text-xs text-rose-600">Non conveniente</span>`;
+
+                const billColor = tech.billSaving >= 0 ? 'text-emerald-700' : 'text-rose-600';
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0 ${isActive ? 'bg-petrol-600 ring-4 ring-petrol-200' : 'bg-slate-300'}"></span>
+                            <div>
+                                <div class="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                                    <span>${tech.shortName}</span>
+                                    ${isBest ? '<span class="px-1.5 py-0.5 text-[10px] font-bold uppercase rounded bg-amber-400 text-petrol-950">Best Fit</span>' : ''}
+                                </div>
+                                <div class="text-[11px] text-slate-500">${tech.badge}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-3 font-mono text-xs text-slate-700">${tech.sizeLabel}</td>
+                    <td class="py-3.5 px-3 text-right">
+                        <span class="inline-block px-2 py-0.5 rounded-md text-xs font-mono font-semibold border ${pesBadgeColor}">
+                            ${fmtDec1.format(tech.pes)}%
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-3 text-right font-mono font-bold text-amber-700 tabular-nums">
+                        ${fmtInt.format(tech.teeYear)}
+                    </td>
+                    <td class="py-3.5 px-3 text-right font-mono font-semibold text-petrol-900 tabular-nums">
+                        ${fmtCurr.format(tech.teeRevTotal)}
+                    </td>
+                    <td class="py-3.5 px-3 text-right font-mono font-semibold ${billColor} tabular-nums">
+                        ${tech.billSaving >= 0 ? '+' : ''}${fmtCurr.format(tech.billSaving)}
+                    </td>
+                    <td class="py-3.5 px-3 text-right font-mono text-xs text-slate-600 tabular-nums">
+                        ${fmtCurr.format(tech.capex)}
+                    </td>
+                    <td class="py-3.5 px-4 text-right tabular-nums">
+                        ${pbDisplay}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Aggiorna i due grafici Chart.js
+        function updateCharts(scenarios, activeTech) {
+            const labels = scenarios.map(s => s.shortName);
+            const billData = scenarios.map(s => Math.round(s.billSaving));
+            const teeData = scenarios.map(s => Math.round(s.teeRevYear));
+
+            // 1. Grafico a Barre Impilate: Risparmio Bolletta vs Ricavo TEE Annuo
+            const ctxBenefits = document.getElementById('benefitsChart').getContext('2d');
+            if (benefitsChartInstance) {
+                benefitsChartInstance.destroy();
+            }
+            benefitsChartInstance = new Chart(ctxBenefits, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Risparmio Bolletta (€/anno)',
+                            data: billData,
+                            backgroundColor: '#10b981', // Verde smeraldo
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'Ricavo Vendita TEE (€/anno)',
+                            data: teeData,
+                            backgroundColor: '#f59e0b', // Oro / Ambra TEE
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${fmtCurr.format(ctx.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 11 } }
+                        },
+                        y: {
+                            stacked: true,
+                            ticks: {
+                                font: { family: 'JetBrains Mono', size: 10 },
+                                callback: val => (val / 1000) + 'k €'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Grafico Lineare: Flusso di Cassa Cumulato a 10 Anni
+            const years = ['Anno 0', 'Anno 1', 'Anno 2', 'Anno 3', 'Anno 4', 'Anno 5', 'Anno 6', 'Anno 7', 'Anno 8', 'Anno 9', 'Anno 10'];
+            const colors = ['#164657', '#0284c7', '#059669', '#94a3b8'];
+
+            const datasetsCashflow = scenarios.map((tech, idx) => {
+                const points = [];
+                let cum = -tech.capex;
+                points.push(Math.round(cum));
+                for (let y = 1; y <= 10; y++) {
+                    const teeActive = y <= tech.incentiveYears ? tech.teeRevYear : 0;
+                    cum += (tech.billSaving + teeActive);
+                    points.push(Math.round(cum));
+                }
+                const isSelected = tech.id === activeTech.id;
+                return {
+                    label: tech.shortName,
+                    data: points,
+                    borderColor: isSelected ? '#d97706' : colors[idx % colors.length],
+                    backgroundColor: isSelected ? 'rgba(245, 158, 11, 0.1)' : 'transparent',
+                    borderWidth: isSelected ? 3 : 1.8,
+                    pointRadius: isSelected ? 3.5 : 2,
+                    tension: 0.25,
+                    fill: isSelected
+                };
+            });
+
+            const ctxCash = document.getElementById('cashflowChart').getContext('2d');
+            if (cashflowChartInstance) {
+                cashflowChartInstance.destroy();
+            }
+            cashflowChartInstance = new Chart(ctxCash, {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: datasetsCashflow
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { family: 'Inter', size: 11 }, boxWidth: 12 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${fmtCurr.format(ctx.parsed.y)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 10 } }
+                        },
+                        y: {
+                            grid: {
+                                color: ctx => ctx.tick.value === 0 ? '#0f172a' : '#e2e8f0',
+                                lineWidth: ctx => ctx.tick.value === 0 ? 1.5 : 1
+                            },
+                            ticks: {
+                                font: { family: 'JetBrains Mono', size: 10 },
+                                callback: val => (val / 1000) + 'k €'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Listener reattivi su tutti gli input
+        window.addEventListener('DOMContentLoaded', () => {
+            const inputs = [
+                'elecConsumption', 'elecPrice',
+                'thermConsumption', 'gasPrice',
+                'coolConsumption', 'chillerCop',
+                'operatingHours', 'teePrice'
+            ];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', () => {
+                        runSimulation();
+                    });
+                }
+            });
+
+            // Avvio simulazione iniziale
+            runSimulation();
+        });
+    </script>
+</body>
+</html>
